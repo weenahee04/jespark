@@ -141,13 +141,14 @@ const App: React.FC = () => {
   const [selectedService, setSelectedService] = useState<ServiceVenue | null>(null);
   const [userPoints, setUserPoints] = useState(12500);
   
-  // Theme State
+  // Theme State - Default to light mode
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' ||
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      // Only check localStorage, default to light mode
+      const savedTheme = localStorage.getItem('theme');
+      return savedTheme === 'dark';
     }
-    return false;
+    return false; // Default to light mode
   });
 
   // Chat State
@@ -174,9 +175,14 @@ const App: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Apply Theme Effect
+  // Apply Theme Effect - Default to light mode
   useEffect(() => {
-    if (isDarkMode) {
+    // On first load, ensure light mode is default if no theme is saved
+    const savedTheme = localStorage.getItem('theme');
+    if (!savedTheme) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else if (isDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {

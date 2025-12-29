@@ -109,3 +109,5 @@ vercel env add GEMINI_API_KEY production
 
 **คำแนะนำ:** ตรวจสอบ deployment logs ใน Vercel Dashboard เพื่อดูรายละเอียด
 
+
+

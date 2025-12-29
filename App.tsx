@@ -2,21 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Home, 
   Gift, 
-  MessageCircle, 
   User, 
   Pill, 
   Heart, 
   Activity, 
   Smile, 
-  Send,
   Utensils,
   MoreHorizontal,
   Bell,
   ChevronRight,
   Settings,
   CreditCard,
-  Network,
-  Brain,
   Check,
   Info,
   Leaf,
@@ -34,8 +30,6 @@ import { QuickNav } from './components/QuickNav';
 import { RewardCard } from './components/RewardCard';
 import { BannerCarousel } from './components/BannerCarousel';
 import { SectionBanner } from './components/SectionBanner';
-import { KnowledgeGraph } from './components/KnowledgeGraph';
-import { AIBrainView } from './components/AIBrainView';
 import { LoginScreen } from './components/LoginScreen';
 import { RegisterScreen } from './components/RegisterScreen';
 import { MobileTopupScreen } from './components/MobileTopupScreen';
@@ -49,8 +43,7 @@ import { NotificationCenter } from './components/NotificationCenter';
 import { RewardDetailScreen } from './components/RewardDetailScreen';
 import { ServiceDetailScreen } from './components/ServiceDetailScreen';
 import { PaymentMethodsScreen } from './components/PaymentMethodsScreen';
-import { generateHealthAdvice, extractKnowledgeGraph } from './services/geminiService';
-import { QuickNavItem, RewardItem, ChatMessage, Tab, KnowledgeGraphData, LearnedConcept, EVStation, ServiceVenue } from './types';
+import { QuickNavItem, RewardItem, Tab, EVStation, ServiceVenue } from './types';
 
 // --- MOCK DATA ---
 const NAV_ITEMS: QuickNavItem[] = [
@@ -151,29 +144,10 @@ const App: React.FC = () => {
     return false; // Default to light mode
   });
 
-  // Chat State
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'สวัสดีครับ มีเรื่องสุขภาพอะไรให้ผมช่วยแนะนำวันนี้ไหมครับ? (Hello! How can I help you with your health today?)' }
-  ]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Knowledge Graph State
-  const [showGraph, setShowGraph] = useState(false);
-  const [graphData, setGraphData] = useState<KnowledgeGraphData>({ nodes: [], edges: [] });
-  const [isGraphLoading, setIsGraphLoading] = useState(false);
-
-  // AI Brain / Training State
-  const [aiKnowledge, setAiKnowledge] = useState<LearnedConcept[]>([]);
-  const [showBrainView, setShowBrainView] = useState(false);
-  const [lastInteractionPreview, setLastInteractionPreview] = useState('');
-
   // EV Station State
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [evStations, setEvStations] = useState<EVStation[]>(INITIAL_EV_STATIONS);
   const [locationError, setLocationError] = useState<string | null>(null);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Apply Theme Effect - Default to light mode
   useEffect(() => {
@@ -241,73 +215,6 @@ const App: React.FC = () => {
     setEvStations(updatedStations);
   };
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
-
-    const userMsg: ChatMessage = { role: 'user', text: inputText };
-    setMessages(prev => [...prev, userMsg]);
-    const currentInput = inputText; 
-    setLastInteractionPreview(currentInput.length > 20 ? currentInput.substring(0, 20) + '...' : currentInput);
-
-    setInputText('');
-    setIsLoading(true);
-
-    let accumulatedText = "";
-    
-    setMessages(prev => [...prev, { role: 'model', text: '...' }]);
-
-    await generateHealthAdvice(userMsg.text, (chunk) => {
-      accumulatedText = chunk;
-      setMessages(prev => {
-        const newHistory = [...prev];
-        newHistory[newHistory.length - 1] = { role: 'model', text: accumulatedText };
-        return newHistory;
-      });
-    });
-
-    setIsLoading(false);
-
-    if (accumulatedText) {
-       setIsGraphLoading(true);
-       const contextForGraph = `User: ${currentInput}\nAI: ${accumulatedText}`;
-       const graph = await extractKnowledgeGraph(contextForGraph);
-       setGraphData(graph);
-       setIsGraphLoading(false);
-    }
-  };
-
-  const handleTrainAI = () => {
-    if (graphData.nodes.length === 0) return;
-
-    const newConcepts: LearnedConcept[] = [];
-    let addedCount = 0;
-
-    graphData.nodes.forEach(node => {
-      const exists = aiKnowledge.some(k => k.label.toLowerCase() === node.label.toLowerCase());
-      if (!exists) {
-        newConcepts.push({
-          ...node,
-          learnedAt: new Date(),
-          confidence: 0.95,
-          sourceInteraction: lastInteractionPreview || 'Chat Interaction'
-        });
-        addedCount++;
-      }
-    });
-
-    if (addedCount > 0) {
-      setAiKnowledge(prev => [...prev, ...newConcepts]);
-      setToast({
-        message: `AI เรียนรู้สำเร็จ! เพิ่ม ${addedCount} ข้อมูลใหม่`,
-        type: 'success'
-      });
-    } else {
-      setToast({
-        message: 'AI ทราบข้อมูลเหล่านี้แล้ว',
-        type: 'info'
-      });
-    }
-  };
 
   const handleQuickNavClick = (id: string) => {
     if (id === 'mobile') {
@@ -484,108 +391,6 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderChat = () => (
-    <div className="flex flex-col h-[calc(100vh-80px)] bg-[#F5F9F7] dark:bg-slate-900 animate-fade-in relative transition-colors duration-300">
-      <div className="bg-white dark:bg-slate-800 px-5 py-3 shadow-sm border-b border-slate-100 dark:border-slate-700 flex items-center justify-between z-20">
-        <div>
-           <h1 className="text-lg font-bold text-[#1B4D3E] dark:text-emerald-400 font-kanit">Poly</h1>
-           <p className="text-xs text-slate-500 dark:text-slate-400">AI Health Assistant</p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <button 
-             onClick={() => setShowBrainView(true)}
-             className="flex items-center justify-center h-8 w-8 rounded-full bg-[#F5F9F7] dark:bg-slate-700 text-[#1B4D3E] dark:text-emerald-400 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors relative"
-          >
-             <Brain className="h-4 w-4" />
-             {aiKnowledge.length > 0 && (
-               <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] text-white ring-2 ring-white dark:ring-slate-800">
-                 {aiKnowledge.length}
-               </span>
-             )}
-          </button>
-
-          <button 
-            onClick={() => setShowGraph(!showGraph)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold font-kanit transition-all border ${
-              showGraph 
-              ? 'bg-[#1B4D3E] text-white border-[#1B4D3E] shadow-md' 
-              : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-            }`}
-          >
-            <Network className="h-4 w-4" />
-            <span>{showGraph ? 'Chat View' : 'Graph View'}</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-hidden relative">
-        <div className={`absolute inset-0 flex flex-col transition-transform duration-300 ${showGraph ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100 z-10'}`}>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm font-kanit leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-[#1B4D3E] text-white rounded-br-none shadow-md' 
-                    : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-slate-700 rounded-bl-none'
-                }`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        <div className={`absolute inset-0 transition-transform duration-300 ${showGraph ? 'translate-x-0 opacity-100 z-10' : 'translate-x-full opacity-0 pointer-events-none'}`}>
-           <KnowledgeGraph 
-             data={graphData} 
-             isLoading={isLoading || isGraphLoading} 
-             onTrain={handleTrainAI}
-           />
-        </div>
-
-        {showBrainView && (
-           <AIBrainView 
-             knowledge={aiKnowledge} 
-             onClose={() => setShowBrainView(false)} 
-           />
-        )}
-        
-        {toast && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm animate-fade-in-down">
-             <div className="bg-[#1B4D3E]/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
-                <div className={`rounded-full p-1 ${toast.type === 'success' ? 'bg-[#1B4D3E]/20 text-[#1B4D3E]' : 'bg-blue-500/20 text-blue-400'}`}>
-                  {toast.type === 'success' ? <Check className="h-5 w-5" /> : <Info className="h-5 w-5" />}
-                </div>
-                <span className="font-kanit text-sm font-medium leading-tight">{toast.message}</span>
-             </div>
-          </div>
-        )}
-
-      </div>
-
-      <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 z-20 transition-colors duration-300">
-        <div className="flex items-center gap-2 rounded-full bg-[#F5F9F7] dark:bg-slate-900 px-4 py-2 border border-slate-200 dark:border-slate-600">
-          <input 
-            className="flex-1 bg-transparent text-sm text-[#222222] dark:text-slate-100 outline-none placeholder:text-slate-400 font-kanit"
-            placeholder="ถามเรื่องสุขภาพ... (Ask about health)"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            disabled={isLoading}
-          />
-          <button 
-            onClick={handleSendMessage}
-            disabled={isLoading}
-            className={`rounded-full p-2 transition-colors ${inputText.trim() ? 'bg-[#1B4D3E] text-white shadow-md' : 'bg-slate-300 dark:bg-slate-700 text-white'}`}
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderProfile = () => (
     <div className="flex flex-col h-full bg-[#F5F9F7] dark:bg-slate-900 pb-24 animate-fade-in transition-colors duration-300">
@@ -715,7 +520,6 @@ const App: React.FC = () => {
       <main className="flex-1 overflow-y-auto no-scrollbar bg-white dark:bg-slate-900">
         {activeTab === Tab.HOME && renderHome()}
         {activeTab === Tab.EV_STATIONS && renderEVStations()}
-        {activeTab === Tab.AI_CHAT && renderChat()}
         {activeTab === Tab.MOBILE_TOPUP && (
           <MobileTopupScreen onBack={() => setActiveTab(Tab.HOME)} />
         )}
@@ -811,19 +615,6 @@ const App: React.FC = () => {
           label="EV Charge" 
         />
         
-        <div className="relative -top-5">
-           <button 
-             onClick={() => setActiveTab(Tab.AI_CHAT)}
-             className={`flex h-16 w-16 items-center justify-center rounded-full border-4 border-white dark:border-slate-800 shadow-xl shadow-green-500/20 transition-all ${
-               activeTab === Tab.AI_CHAT 
-                 ? 'bg-[#1B4D3E] scale-110' 
-                 : 'bg-[#1B4D3E] hover:scale-105'
-             }`}
-           >
-             <MessageCircle className="h-7 w-7 text-white" />
-           </button>
-        </div>
-
         <NavButton 
           isActive={activeTab === Tab.REWARDS} 
           onClick={() => setActiveTab(Tab.REWARDS)} 

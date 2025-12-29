@@ -206,3 +206,5 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, isDarkMo
   );
 };
 
+
+

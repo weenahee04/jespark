@@ -16,17 +16,10 @@ export interface QuickNavItem {
   color?: string;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
-  isError?: boolean;
-}
-
 export enum Tab {
   HOME = 'HOME',
   REWARDS = 'REWARDS',
   EV_STATIONS = 'EV_STATIONS',
-  AI_CHAT = 'AI_CHAT',
   PROFILE = 'PROFILE',
   MOBILE_TOPUP = 'MOBILE_TOPUP',
   ELEC_BILL = 'ELEC_BILL',
@@ -38,35 +31,6 @@ export enum Tab {
   REWARD_DETAIL = 'REWARD_DETAIL',
   SERVICE_DETAIL = 'SERVICE_DETAIL',
   PAYMENT_METHODS = 'PAYMENT_METHODS'
-}
-
-// Knowledge Graph Types
-export type NodeType = 'symptom' | 'disease' | 'medicine' | 'location' | 'other';
-
-export interface GraphNode {
-  id: string;
-  label: string;
-  type: NodeType;
-  x?: number; // For visualization
-  y?: number;
-}
-
-export interface GraphEdge {
-  source: string;
-  target: string;
-  relation: string;
-}
-
-export interface KnowledgeGraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
-
-// AI Training Types
-export interface LearnedConcept extends GraphNode {
-  learnedAt: Date;
-  confidence: number;
-  sourceInteraction: string; // The chat message ID or preview
 }
 
 // EV Station Types

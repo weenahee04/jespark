@@ -82,3 +82,5 @@ git remote set-url origin NEW_URL
 
 **พร้อมแล้ว!** หลังจาก push สำเร็จ คุณสามารถ deploy บน Vercel ได้เลย
 
+
+

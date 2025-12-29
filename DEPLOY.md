@@ -130,3 +130,5 @@ Vercel จะ auto-deploy เมื่อ:
 
 **หมายเหตุ:** อย่าลืมตั้งค่า `GEMINI_API_KEY` ใน Environment Variables ก่อน deploy!
 
+
+
